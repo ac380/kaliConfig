@@ -1,0 +1,12 @@
+# This repo is consumed on Linux (Kali). Force LF for all text files so
+# CRLF never sneaks into shell blocks, YAML, or dotfiles from a Windows editor.
+* text=auto eol=lf
+
+# Binary assets must never be line-ending converted.
+*.bz2 binary
+*.zip binary
+*.gz binary
+*.der binary
+*.png binary
+*.jpg binary
+*.ico binary

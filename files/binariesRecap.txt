@@ -1,0 +1,91 @@
+ADCollector (Windows Recon) - Gathers Active Directory objects and attributes for domain insight.
+ADCSPwn (Windows AD CS PrivEsc) - Abuses Active Directory Certificate Services misconfigurations to escalate privileges.
+ADSearch (Windows Recon) - LDAP querying of Active Directory for enumeration.
+ADFSDump (Windows Cred Access) - Dumps Active Directory Federation Services configuration and secrets.
+AtYourService (Windows Recon) - Enumerates Windows services on a host.
+BetterSafetyKatz (Windows Cred Access) - Loads Mimikatz in memory for credential extraction.
+Certify (Windows AD CS Recon/PrivEsc) - Enumerates and abuses misconfigurations in AD Certificate Services.
+EDD (Windows Recon) - Domain enumeration similar to PowerView.
+ForgeCert (Windows AD CS PrivEsc) - Forges certificates using stolen CA credentials.
+DeployPrinterNightmare (Windows PrivEsc) - Exploits PrinterNightmare for remote code execution.
+Grouper2 (Windows AD Recon) - Identifies insecure Group Policy settings.
+Group3r (Windows AD Recon/PrivEsc) - Advanced Group Policy misconfiguration discovery.
+KrbRelay (Windows AD Lateral/PrivEsc) - Kerberos relay framework for credential abuse.
+KrbRelayUp (Windows AD PrivEsc) - Kerberos based privilege escalation technique.
+InveighZero (Windows Cred Access) - LLMNR/NBNS hash capturing/spoofing.
+LockLess (Windows Collection) - Copies locked files for collection.
+Moriarty (Windows Recon) - Detects missing patches and potential exploits.
+PassTheCert (Windows AD Lateral) - Performs LDAP authentication using a certificate.
+PurpleSharp (Windows Purple Team) - Simulates adversary techniques to produce telemetry.
+Rubeus (Windows AD Cred/Lateral) - Kerberos abuse toolkit for tickets and delegation.
+RunAs (Windows Lateral) - Runs a process as another user.
+SafetyKatz (Windows Cred Access) - Dumps credentials from LSASS.
+SauronEye (Windows Collection) - Searches file systems for specific keywords.
+scout (Windows Recon) - Network and host reconnaissance.
+SearchOutlook (Windows Collection) - Searches Outlook mailboxes for keywords.
+Seatbelt (Windows Recon) - Performs security posture checks on hosts.
+ShadowSpray (Windows AD PrivEsc) - Sprays Shadow Credentials across a domain.
+Sharp-SMBExec (Windows Lateral) - C# SMB remote command execution tool.
+SharpAllowedToAct (Windows AD PrivEsc) - Abuses RBCD for computer account takeover.
+SharpAppLocker (Windows Recon) - Enumerates AppLocker policies.
+SharpBlock (Windows Defense Evasion) - Blocks EDR userland hooking.
+SharpBypassUAC (Windows PrivEsc) - Bypasses User Account Control.
+SharpChisel (Windows C2) - Tunneling wrapper for chisel connections.
+SharpChrome (Windows Cred Access) - Decrypts Google Chrome data.
+SharpChromium (Windows Cred Access) - Extracts Chromium browser artifacts.
+SharpCloud (Windows Collection) - Finds cloud credential artifacts on host.
+SharpCOM (Windows Lateral) - Performs DCOM based remote execution.
+SharpCrashEventLog (Windows Defense Evasion) - Abuses crash event logs for hiding actions.
+SharpDir (Windows Collection) - Searches local or remote directories.
+SharpDoor (Windows Persistence) - Enables multiple RDP sessions.
+SharpDPAPI (Windows Cred Access) - Decrypts DPAPI encrypted secrets.
+SharpDump (Windows Cred Access) - Creates LSASS memory dumps.
+SharpEDRChecker (Windows Recon) - Detects presence of AV/EDR products. :contentReference[oaicite:0]{index=0}
+SharPersist (Windows Persistence) - Hosts multiple persistence mechanisms.
+SharpExec (Windows Lateral) - Remote execution techniques.
+SharpFiles (Windows Collection) - File searching via share data.
+SharpFinder (Windows Collection) - Searches network shares for files.
+SharpGPOAbuse (Windows AD PrivEsc/Persistence) - Uses GPOs for execution or persistence.
+SharpHandler (Windows Cred Access) - Steals handles to LSASS for credential access.
+SharpHose (Windows AD Cred Access) - Performs asynchronous password spraying.
+SharpHound (Windows AD Recon) - AD enumeration for BloodHound analysis.
+SharpKatz (Windows Cred Access) - Pure C# credential dumping.
+SharpKiller (Windows Defense Evasion) - Bypasses AMSI. 
+SharpLaps (Windows AD Cred Access) - Retrieves LAPS passwords.
+SharpMapExec (Windows AD Lateral) - CrackMapExec-style lateral framework.
+SharpMiniDump (Windows Cred Access) - LSASS minidump creation.
+SharpNoPSExec (Windows Lateral) - Fileless remote execution.
+SharpMove (Windows Lateral) - Lateral movement toolkit.
+SharpPrinter (Windows Recon) - Discovers printers on a network.
+SharpRDP (Windows Lateral) - RDP auth command execution.
+SharpReg (Windows Lateral/Recon) - Interacts with remote registry services.
+SharpSecDump (Windows Cred Access) - Remote SAM/LSA secrets dumping.
+SharpSCCM (Windows AD Lateral/PrivEsc) - SCCM interaction and abuse.
+SharpShares (Windows AD Recon) - Enumerates SMB shares.
+SharpSphere (Windows VMware Lateral) - Interacts with VMware guest OS via vCenter.
+SharpSpray (Windows AD Cred Access) - LDAP based password spraying.
+SharpStay (Windows Persistence) - Persistence installation utility.
+SharpSvc (Windows Lateral) - Service control manager interactions.
+SharpSniper (Windows AD Recon) - Finds workstation IPs of users.
+SharpSQLPwn (Windows SQL Lateral/PrivEsc) - Identifies/exploits MSSQL weaknesses.
+SharpTask (Windows Lateral/Persistence) - Scheduled task abuse.
+SharpTokenFinder (Windows Cred Access) - Extracts OAuth/M365 tokens.
+SharpUp (Windows PrivEsc) - Local privilege escalation enumeration.
+SharpView (Windows AD Recon) - AD enumeration (LDAP) tool. :contentReference[oaicite:1]{index=1}
+SharpWMI (Windows Lateral) - Executes via WMI.
+SharpWebServer (Windows C2) - HTTP/WebDAV server capturing NTLM.
+SharpWifiGrabber (Windows Cred Access) - Retrieves saved Wi-Fi passwords.
+SharpZeroLogon (Windows AD PrivEsc) - Exploits Zerologon vulnerability.
+Shhmon (Windows Defense Evasion) - Disables Sysmon by unloading driver.
+Snaffler (Windows AD Collection) - Finds sensitive files for assessment.
+SqlClient (Windows SQL Lateral) - MSSQL client for beacon access.
+StandIn (Windows AD Recon/Lateral) - Post-compromise AD toolkit.
+StickyNotesExtract (Windows Collection) - Extracts Sticky Notes data.
+SweetPotato (Windows PrivEsc) - Local privilege escalation to SYSTEM.
+ThunderFox (Windows Cred Access) - Extracts Firefox/Thunderbird passwords/history.
+TruffleSnout (Windows AD Recon) - Iterative AD discovery tool.
+TokenStomp (Windows PrivEsc) - Abuses token privilege removal flaw.
+Watson (Windows Recon) - Missing patch enumeration.
+winPEAS (Windows PrivEsc) - Privilege escalation enumeration.
+WMIReg (Windows Lateral/Recon) - Access registry via WMI.
+Whisker (Windows AD PrivEsc) - Takes over AD user/computer accounts via msDS-KeyCredentialLink “Shadow Credentials.” :contentReference[oaicite:2]{index=2}

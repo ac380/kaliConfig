@@ -1,0 +1,7 @@
+---
+# Ansible collection dependencies for config.yaml.
+# Install with: ansible-galaxy collection install -r requirements.yml
+collections:
+  # Floor pin: >=8.0.0 guarantees the xfconf module features this play relies on.
+  - name: community.general
+    version: ">=8.0.0"

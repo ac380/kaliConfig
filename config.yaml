@@ -1,0 +1,811 @@
+---
+- name: Configure the Kali Machine
+  hosts: localhost
+  vars:
+    user: "{{ lookup('env', 'USER') }}"
+    user_home: "/home/{{ user }}"
+    docker_gpg_key_url: "https://download.docker.com/linux/debian/gpg"
+    docker_repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable"
+    burpsuite_extras_dir: "/usr/local/lib/BurpSuite"
+    burpsuite_extras_jars:
+      jruby:
+        jar: jruby-complete.jar
+        url: https://repo1.maven.org/maven2/org/jruby/jruby-complete/9.4.0.0/jruby-complete-9.4.0.0.jar
+        checksum: sha256:e6817cf528976a50a054910f006ee34df07c4580c8a2a4c8c8d61cda0238a108
+      jython:
+        jar: jython-standalone.jar
+        url: https://repo1.maven.org/maven2/org/python/jython-standalone/2.7.3/jython-standalone-2.7.3.jar
+        checksum: sha256:da7f3d829b148bcfa86b059dc964e3a8556fedb021096c8db07e30c66faab9b4
+    FirefoxPlugins:
+      - "wappalyzer"
+      - "dotgit"
+      - "foxyproxy-standard"
+
+  tasks:
+    - name: Remove conflicting vscode.sources file if exists
+      become: true
+      ansible.builtin.file:
+        path: /etc/apt/sources.list.d/vscode.sources
+        state: absent
+
+    - name: Ensure system is fully upgraded before installing new packages
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: full
+
+    - name: Add VS Code GPG key
+      become: true
+      ansible.builtin.shell: |
+        wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/packages.microsoft.gpg
+      args:
+        creates: /usr/share/keyrings/packages.microsoft.gpg
+
+    - name: Add VS Code repository
+      become: true
+      ansible.builtin.shell: |
+        echo "deb [arch=amd64 signed-by=/usr/share/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list
+      args:
+        creates: /etc/apt/sources.list.d/vscode.list
+
+    - name: Install Visual Studio Code
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+        name: code
+        state: present
+
+    - name: Remove netexec package
+      become: true
+      ansible.builtin.apt:
+        name: netexec
+        state: absent
+
+    - name: Install all required apps
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - zsh
+          - xsel
+          - curl
+          - grc
+          - dnsrecon
+          - enum4linux
+          - feroxbuster
+          - gobuster
+          - impacket-scripts
+          - nbtscan
+          - nikto
+          - nmap
+          - powershell
+          - ffuf
+          - onesixtyone
+          - oscanner
+          - redis-tools
+          - smbclient
+          - smbmap
+          - sslscan
+          - whatweb
+          - subfinder
+          - naabu
+          - assetfinder
+          - arjun
+          - python3-xlsxwriter
+          - wget
+          - krbrelayx
+          - cargo
+          - chromium
+          - fonts-firacode
+          - eza
+          - seclists
+          - ripgrep
+          - fd-find
+          - unzip
+          - fzf
+          - bat
+          - ansifilter
+          - john
+          - aircrack-ng
+          - burpsuite
+          - metasploit-framework
+          - rubeus
+          - dirsearch
+          - sqlmap
+          - hashcat
+          - responder
+          - masscan
+          - autorecon
+          - exiftool
+          - ligolo-ng
+          - evil-winrm-py
+          - git
+          - pipx
+          - freerdp3-x11
+          - rdesktop
+          # kali-tools-windows-resources metapackage expanded to its members,
+          # minus powercat + shellter (both hard Depends of the metapackage and
+          # currently unfetchable via Kali's Cloudflare mirror -> 403 Forbidden).
+          # Installing the members directly lets the rest of the set through.
+          - dbd
+          - dnschef
+          - heartleech
+          - hyperion
+          - mimikatz
+          - ncat-w32
+          - ollydbg
+          - regripper
+          - sbd
+          - secure-socket-funneling-windows-binaries
+          - tftpd32
+          - wce
+          - windows-binaries
+          - windows-privesc-check
+          - kali-community-wallpapers
+          - xfce4-panel-profiles
+          - libsmbclient-dev
+          - freetds-dev
+          - libgcrypt20-dev
+          - libidn-dev
+          - libpcre2-dev
+          - libpq-dev
+          - libapr1-dev
+          - libaprutil1-dev
+          - libsvn-dev
+          - libfbclient2
+          - libmysql++-dev
+          - freerdp3-dev
+          - libssh-dev
+          - libsmb2-dev
+          - gcc-mingw-w64-x86-64
+          - libclang-dev
+          - libkrb5-dev
+          - libsasl2-modules-gssapi-mit
+          - libnss3
+          - musl-tools
+          - golang-go
+        state: present
+      register: apt_install_apps
+      until: apt_install_apps is succeeded
+      retries: 5
+      delay: 15
+
+    - name: Install Shortscan
+      ansible.builtin.shell: |
+        go install github.com/bitquark/shortscan/cmd/shortscan@latest
+      args:
+        executable: /bin/bash
+        creates: "{{ user_home }}/go/bin/shortscan"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install ldapnomnom
+      ansible.builtin.shell: |
+        go install github.com/lkarlslund/ldapnomnom@latest
+      args:
+        executable: /bin/bash
+        creates: "{{ user_home }}/go/bin/ldapnomnom"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install katana
+      ansible.builtin.shell: |
+        go install github.com/projectdiscovery/katana/cmd/katana@latest
+      args:
+        executable: /bin/bash
+        creates: "{{ user_home }}/go/bin/katana"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install MSSQLHound (Go)
+      ansible.builtin.shell: |
+        go install github.com/SpecterOps/MSSQLHound/cmd/mssqlhound@latest
+      args:
+        executable: /bin/bash
+        creates: "{{ user_home }}/go/bin/mssqlhound"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Clone RelayKing repository
+      ansible.builtin.git:
+        repo: https://github.com/depthsecurity/RelayKing-Depth.git
+        dest: '{{ user_home }}/Binaries/RelayKing'
+        update: true
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Create RelayKing virtualenv
+      ansible.builtin.command: 'python3 -m venv {{ user_home }}/Binaries/RelayKing/venv'
+      args:
+        creates: '{{ user_home }}/Binaries/RelayKing/venv/bin/activate'
+
+    - name: Install RelayKing requirements inside venv
+      ansible.builtin.pip:
+        requirements: '{{ user_home }}/Binaries/RelayKing/requirements.txt'
+        virtualenv: '{{ user_home }}/Binaries/RelayKing/venv'
+        virtualenv_python: python3
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Clone Impacket-Partial-Mic repository
+      ansible.builtin.git:
+        repo: https://github.com/decoder-it/impacket-partial-mic.git
+        dest: '{{ user_home }}/Binaries/Impacket-Partial-Mic'
+        update: true
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Create Impacket-Partial-Mic virtualenv
+      ansible.builtin.command: 'python3 -m venv {{ user_home }}/Binaries/Impacket-Partial-Mic/venv'
+      args:
+        creates: '{{ user_home }}/Binaries/Impacket-Partial-Mic/venv/bin/activate'
+
+    - name: Install Impacket-Partial-Mic into virtualenv
+      ansible.builtin.pip:
+        name: '{{ user_home }}/Binaries/Impacket-Partial-Mic'
+        virtualenv: '{{ user_home }}/Binaries/Impacket-Partial-Mic/venv'
+        virtualenv_python: python3
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Clone gMSADumper repository
+      ansible.builtin.git:
+        repo: 'https://github.com/micahvandeusen/gMSADumper.git'
+        dest: '{{ user_home }}/Binaries/gMSADumper'
+        version: 'main'
+        update: true
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Create gMSADumper virtualenv
+      ansible.builtin.command: 'python3 -m venv {{ user_home }}/Binaries/gMSADumper/venv'
+      args:
+        creates: '{{ user_home }}/Binaries/gMSADumper/venv/bin/activate'
+
+    - name: Install gMSADumper requirements inside venv
+      ansible.builtin.pip:
+        requirements: '{{ user_home }}/Binaries/gMSADumper/requirements.txt'
+        virtualenv: '{{ user_home }}/Binaries/gMSADumper/venv'
+        virtualenv_python: python3
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Ensure ~/.local/bin exists
+      ansible.builtin.file:
+        path: "{{ user_home }}/.local/bin"
+        state: directory
+        mode: '0755'
+
+    - name: Create gMSADumper wrapper in ~/.local/bin
+      ansible.builtin.copy:
+        dest: "{{ user_home }}/.local/bin/gMSADumper"
+        mode: '0755'
+        content: |
+          #!/bin/bash
+          exec "{{ user_home }}/Binaries/gMSADumper/venv/bin/python" "{{ user_home }}/Binaries/gMSADumper/gMSADumper.py" "$@"
+
+    - name: Clone ntlm_theft repository
+      ansible.builtin.git:
+        repo: 'https://github.com/Greenwolf/ntlm_theft.git'
+        dest: '{{ user_home }}/Binaries/ntlm_theft'
+        version: 'master'
+        update: true
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Create ntlm_theft wrapper in ~/.local/bin
+      ansible.builtin.copy:
+        dest: "{{ user_home }}/.local/bin/ntlm_theft"
+        mode: '0755'
+        content: |
+          #!/bin/bash
+          exec python3 "{{ user_home }}/Binaries/ntlm_theft/ntlm_theft.py" "$@"
+
+    - name: Add custom Zsh configuration
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/.zshrc"
+        dest: "{{ user_home }}/.zshrc"
+        mode: '0644'
+
+    - name: Add custom Terminal configuration
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/qterminal.ini"
+        dest: "{{ user_home }}/.config/qterminal.org/qterminal.ini"
+        mode: '0644'
+
+    - name: Add custom Tmux configuration
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/.tmux.conf"
+        dest: "{{ user_home }}/.tmux.conf"
+        mode: '0644'
+
+    - name: Create Autorecon directory
+      become: true
+      ansible.builtin.file:
+        path: "/root/.config/AutoRecon/"
+        state: directory
+        mode: '0755'
+
+    - name: Add custom Autorecon configuration
+      become: true
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/config.toml"
+        dest: "/root/.config/AutoRecon/config.toml"
+        mode: '0644'
+
+    - name: Add custom .profile for paths
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/.profile"
+        dest: "{{ user_home }}/.profile"
+        mode: '0644'
+
+    - name: Ensure tmux plugin directory exists
+      ansible.builtin.file:
+        path: "{{ user_home }}/.tmux/plugins"
+        state: directory
+        mode: '0755'
+
+    - name: Clone TPM plugin
+      ansible.builtin.git:
+        repo: 'https://github.com/tmux-plugins/tpm'
+        dest: '{{ user_home }}/.tmux/plugins/tpm'
+        version: 'master'
+        update: true
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install TPM plugins
+      ansible.builtin.shell: |
+        ~/.tmux/plugins/tpm/bin/install_plugins
+      args:
+        executable: /bin/bash
+        creates: "{{ user_home }}/.tmux/plugins/tmux-resurrect"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Create random wallpaper script
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/.updatewallpaper.sh"
+        dest: "{{ user_home }}/.updatewallpaper.sh"
+        mode: '0755'
+
+    # Install Docker
+    - name: Ensure apt keyrings directory exists
+      become: true
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Install Docker GPG key
+      become: true
+      ansible.builtin.shell: |
+        wget -qO- {{ docker_gpg_key_url }} | gpg --dearmor > /etc/apt/keyrings/docker.gpg
+      args:
+        creates: /etc/apt/keyrings/docker.gpg
+
+    - name: Add Docker repository
+      become: true
+      ansible.builtin.lineinfile:
+        dest: /etc/apt/sources.list.d/docker.list
+        line: "{{ docker_repo }}"
+        create: true
+
+    - name: Install Docker packages
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Start Docker service
+      become: true
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Add user to docker group
+      become: true
+      ansible.builtin.user:
+        name: "{{ user }}"
+        groups: docker
+        append: true
+
+    - name: Create Engagement directory
+      ansible.builtin.file:
+        path: "{{ user_home }}/Engagement"
+        state: directory
+        mode: '0755'
+
+    - name: Create Binaries directory
+      ansible.builtin.file:
+        path: "{{ user_home }}/Binaries"
+        state: directory
+        mode: '0755'
+
+    - name: Create Staging directory
+      ansible.builtin.file:
+        path: "{{ user_home }}/Staging"
+        state: directory
+        mode: '0755'
+
+    - name: Install updog via pipx
+      ansible.builtin.command: pipx install updog
+      args:
+        creates: "{{ user_home }}/.local/bin/updog"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install bloodyAD via pipx
+      ansible.builtin.command: pipx install bloodyAD
+      args:
+        creates: "{{ user_home }}/.local/bin/bloodyAD"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install Penelope via pipx
+      ansible.builtin.command: pipx install git+https://github.com/brightio/penelope
+      args:
+        creates: "{{ user_home }}/.local/bin/penelope"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install Git Dumper via pipx
+      ansible.builtin.command: pipx install git-dumper
+      args:
+        creates: "{{ user_home }}/.local/bin/git-dumper"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install ssh audit via pipx
+      ansible.builtin.command: pipx install ssh-audit
+      args:
+        creates: "{{ user_home }}/.local/bin/ssh-audit"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install creds via pipx
+      ansible.builtin.command: pipx install defaultcreds-cheat-sheet
+      args:
+        creates: "{{ user_home }}/.local/bin/creds"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install impacket via pipx
+      ansible.builtin.command: pipx install impacket
+      args:
+        creates: "{{ user_home }}/.local/pipx/venvs/impacket"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install nxc via pipx
+      become: true
+      ansible.builtin.command: pipx install git+https://github.com/Pennyw0rth/NetExec --global
+      args:
+        creates: /usr/local/bin/nxc
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install RustHound via Cargo
+      ansible.builtin.command: cargo install rusthound-ce
+      args:
+        creates: "{{ user_home }}/.cargo/bin/rusthound-ce"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install adscan via pipx
+      ansible.builtin.command: pipx install adscan
+      args:
+        creates: "{{ user_home }}/.local/bin/adscan"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install firefox_decrypt via pipx
+      ansible.builtin.command: pipx install git+https://github.com/unode/firefox_decrypt
+      args:
+        creates: "{{ user_home }}/.local/bin/firefox-decrypt"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install WES-NG via pipx
+      ansible.builtin.command: pipx install wesng
+      args:
+        creates: "{{ user_home }}/.local/bin/wes"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Download tools to Binaries folder
+      ansible.builtin.get_url:
+        url: "{{ item }}"
+        dest: "{{ user_home }}/Binaries"
+        mode: '0755'
+        force: true
+      loop:
+        - https://github.com/0xb11a1/yetAnotherObfuscator/releases/download/1.1/yetAnotherObfuscator_v1.1.zip
+        - https://raw.githubusercontent.com/decoder-it/printerbugnew/refs/heads/main/printerbugnew.py
+        - https://github.com/ropnop/kerbrute/releases/download/v1.0.3/kerbrute_linux_amd64
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Download LFI Wordlists to their folder
+      become: true
+      ansible.builtin.get_url:
+        url: "{{ item }}"
+        dest: "/usr/share/seclists/Fuzzing/LFI"
+        mode: '0644'
+      loop:
+        - https://raw.githubusercontent.com/carlospolop/Auto_Wordlists/refs/heads/main/wordlists/file_inclusion_linux.txt
+        - https://raw.githubusercontent.com/carlospolop/Auto_Wordlists/refs/heads/main/wordlists/file_inclusion_windows.txt
+        - https://raw.githubusercontent.com/DragonJAR/Security-Wordlist/main/LFI-WordList-Linux
+        - https://raw.githubusercontent.com/DragonJAR/Security-Wordlist/main/LFI-WordList-Windows
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Download OneRuleToGetThemAll to Hashcat Rules
+      become: true
+      ansible.builtin.get_url:
+        url: "{{ item }}"
+        dest: "/usr/share/hashcat/rules"
+        mode: '0644'
+      loop:
+        - https://raw.githubusercontent.com/NotSoSecure/password_cracking_rules/refs/heads/master/OneRuleToRuleThemAll.rule
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Clone Username-Anarchy Repo
+      ansible.builtin.git:
+        repo: 'https://github.com/urbanadventurer/username-anarchy.git'
+        dest: '{{ user_home }}/Binaries/username-anarchy'
+        version: 'master'
+        update: true
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Download tools to Staging folder
+      ansible.builtin.get_url:
+        url: "{{ item }}"
+        dest: "{{ user_home }}/Staging"
+        mode: '0755'
+        force: true
+      loop:
+        - https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas_linux_amd64
+        - https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh
+        - https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas_fat.sh
+        - https://github.com/peass-ng/PEASS-ng/releases/latest/download/winPEASany_ofs.exe
+        - https://github.com/peass-ng/PEASS-ng/releases/latest/download/winPEASx64.exe
+        - https://github.com/peass-ng/PEASS-ng/releases/latest/download/winPEAS.bat
+        - https://github.com/itm4n/PrintSpoofer/releases/download/v1.0/PrintSpoofer64.exe
+        - https://github.com/antonioCoco/RoguePotato/releases/download/1.0/RoguePotato.zip
+        - https://github.com/nicocha30/ligolo-ng/releases/download/v0.8.2/ligolo-ng_agent_0.8.2_linux_amd64.tar.gz
+        - https://github.com/nicocha30/ligolo-ng/releases/download/v0.8.2/ligolo-ng_agent_0.8.2_windows_amd64.zip
+        - https://github.com/jpillora/chisel/releases/download/v1.10.1/chisel_1.10.1_linux_amd64.deb
+        - https://github.com/jpillora/chisel/releases/download/v1.10.1/chisel_1.10.1_windows_amd64.gz
+        - https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64
+        - https://raw.githubusercontent.com/uknowsec/SweetPotato/master/SweetPotato-Webshell-new/bin/Release/SweetPotato.exe
+        - https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET2.exe
+        - https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET35.exe
+        - https://github.com/BeichenDream/GodPotato/releases/download/V1.20/GodPotato-NET4.exe
+        - https://github.com/antonioCoco/RunasCs/releases/download/v1.5/RunasCs.zip
+        - https://github.com/SpecterOps/SharpHound/releases/download/v2.9.0/SharpHound_v2.9.0_windows_x86.zip
+        - https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/refs/heads/master/Privesc/PowerUp.ps1
+        - https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/refs/heads/master/Recon/PowerView.ps1
+        - https://raw.githubusercontent.com/NetSPI/PowerUpSQL/refs/heads/master/PowerUpSQL.ps1
+        - https://raw.githubusercontent.com/int0x33/nc.exe/master/nc.exe
+        - https://raw.githubusercontent.com/int0x33/nc.exe/master/nc64.exe
+        - https://github.com/stealthcopter/deepce/raw/main/deepce.sh
+        - https://github.com/liamg/traitor/releases/download/v0.0.14/traitor-amd64
+        - https://github.com/ohpe/juicy-potato/releases/download/v0.1/JuicyPotato.exe
+        - https://github.com/diego-treitos/linux-smart-enumeration/releases/latest/download/lse.sh
+        - https://raw.githubusercontent.com/jondonas/linux-exploit-suggester-2/refs/heads/master/linux-exploit-suggester-2.pl
+        - https://raw.githubusercontent.com/mzet-/linux-exploit-suggester/master/linux-exploit-suggester.sh
+        - https://github.com/ropnop/kerbrute/releases/download/v1.0.3/kerbrute_windows_amd64.exe
+        - https://raw.githubusercontent.com/fashionproof/EnableAllTokenPrivs/refs/heads/master/EnableAllTokenPrivs.ps1
+        - https://github.com/AlessandroZ/LaZagne/releases/download/v2.4.7/LaZagne.exe
+        - https://raw.githubusercontent.com/Arvanaghi/SessionGopher/refs/heads/master/SessionGopher.ps1
+        - https://github.com/djhohnstein/SharpWeb/releases/download/v1.2/SharpWeb.exe
+        - https://github.com/jakobfriedl/precompiled-binaries/raw/main/Enumeration/Seatbelt.exe
+        - https://github.com/jakobfriedl/precompiled-binaries/raw/main/PrivilegeEscalation/KrbRelayUp.exe
+        - https://github.com/jakobfriedl/precompiled-binaries/raw/main/PrivilegeEscalation/KrbRelay/KrbRelay.exe
+        - https://github.com/jakobfriedl/precompiled-binaries/raw/main/LateralMovement/SimpleBackdoorAdmin.dll
+        - https://github.com/jakobfriedl/precompiled-binaries/raw/main/LateralMovement/SimpleBackdoorAdmin.exe
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Clone TargetedKerberoast Repo
+      ansible.builtin.git:
+        repo: 'https://github.com/ShutdownRepo/targetedKerberoast.git'
+        dest: '{{ user_home }}/Binaries/targetedKerberoast'
+        version: 'main'
+        update: true
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Clone Nishang
+      ansible.builtin.git:
+        repo: 'https://github.com/samratashok/nishang.git'
+        dest: '{{ user_home }}/Staging/Nishang'
+        version: 'master'
+        update: true
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Clone Statistically Likely Repo
+      become: true
+      ansible.builtin.git:
+        repo: 'https://github.com/insidetrust/statistically-likely-usernames.git'
+        dest: '/usr/share/wordlists/StatisticallyLikelyUsernames'
+        version: 'master'
+        update: true
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Clone Sharp Collection Repo
+      ansible.builtin.git:
+        repo: 'https://github.com/Flangvik/SharpCollection.git'
+        dest: '{{ user_home }}/Staging/SharpCollection'
+        version: 'master'
+        update: true
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Clone Obfuscated Sharp Collection Repo
+      ansible.builtin.git:
+        repo: 'https://github.com/Flangvik/ObfuscatedSharpCollection.git'
+        dest: '{{ user_home }}/Staging/obfuscatedSharpCollection'
+        version: 'main'
+        update: true
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Copy Tools Recap txt file
+      ansible.builtin.copy:
+        src: '{{ playbook_dir }}/files/binariesRecap.txt'
+        dest: '{{ user_home }}/Staging/binariesRecap.txt'
+        owner: "{{ user }}"
+        group: "{{ user }}"
+        mode: "0644"
+
+    - name: Ensure BurpSuite extras directory exists
+      become: true
+      ansible.builtin.file:
+        path: "{{ burpsuite_extras_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Download BurpSuite extra JARs
+      become: true
+      ansible.builtin.get_url:
+        url: "{{ item.value.url }}"
+        dest: "{{ burpsuite_extras_dir }}/{{ item.value.jar }}"
+        checksum: "{{ item.value.checksum }}"
+        mode: '0644'
+      loop: "{{ burpsuite_extras_jars | dict2items }}"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Update Firefox policies
+      become: true
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/files/policies.json.j2"
+        dest: "/usr/share/firefox-esr/distribution/policies.json"
+        mode: '0644'
+
+    - name: Check and create username-anarchy symlink if it doesn't exist
+      ansible.builtin.shell: |
+        if [ ! -L ~/.local/bin/username-anarchy ]; then
+          ln -s ~/Binaries/username-anarchy/username-anarchy ~/.local/bin/username-anarchy
+        fi
+      args:
+        executable: /bin/bash
+        creates: "{{ user_home }}/.local/bin/username-anarchy"
+
+    - name: Load xfce4 panel profile
+      ansible.builtin.shell: |
+        xfce4-panel-profiles load {{ playbook_dir }}/files/panel.tar.bz2 &&
+        touch "{{ user_home }}/.config/.panel_profile_loaded"
+      args:
+        creates: "{{ user_home }}/.config/.panel_profile_loaded"
+
+    - name: Remove the <Alt>Delete window keyboard shortcut
+      community.general.xfconf:
+        channel: xfce4-keyboard-shortcuts
+        property: "/xfwm4/custom/<Alt>Delete"
+        state: absent
+
+    - name: Disable desktop icons (set desktop icon style to none)
+      community.general.xfconf:
+        channel: xfce4-desktop
+        property: /desktop-icons/style
+        value: 0
+        value_type: int
+
+    - name: Clean up unused packages and cache
+      become: true
+      ansible.builtin.apt:
+        autoremove: true
+        clean: true
+
+    - name: Display post-installation reminders
+      ansible.builtin.debug:
+        msg:
+          - "Reboot to activate docker group membership."
+          - "After reboot, finish adscan setup: run 'adscan install' (pulls Docker images), then 'adscan start'."
+          - "WES-NG: run 'wes --update' to fetch the CVE definitions before first use."

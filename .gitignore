@@ -1,0 +1,4 @@
+# Never commit the auto-generated GitHub Copilot instructions.
+# A tool regenerates this file locally and it has included work-identity notes;
+# keep it local-only for OPSEC so it can never be committed or pushed.
+.github/copilot-instructions.md

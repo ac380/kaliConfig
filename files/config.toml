@@ -1,0 +1,39 @@
+# Configure regular AutoRecon options at the top of this file.
+
+# nmap-append = '-T3'
+# verbose = 1
+# max-scans = 30
+
+# Configure global options here.
+# [global]
+# username-wordlist = '/usr/share/seclists/Usernames/cirt-default-usernames.txt'
+
+# Configure plugin options here.
+# [dirbuster]
+# threads = 50
+# wordlist = [
+# 	'/usr/share/seclists/Discovery/Web-Content/common.txt',
+# 	'/usr/share/seclists/Discovery/Web-Content/big.txt',
+# 	'/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt'
+# ]
+
+verbose = 1
+only-scans-dir = true
+no-port-dirs = true
+max-scans = 2
+max-port-scans = 2
+
+[global]
+username-wordlist = '/usr/share/seclists/Usernames/cirt-default-usernames.txt'
+password-wordlist = '/usr/share/seclists/Passwords/xato-net-10-million-passwords-100.txt'
+
+# Configure plugin options here.
+[onesixtyone]
+community-strings = '/usr/share/seclists/Discovery/SNMP/snmp-onesixtyone.txt'
+
+[dirbuster]
+wordlist = [
+ 	'/usr/share/seclists/Discovery/Web-Content/quickhits.txt',
+ 	'/usr/share/seclists/Discovery/Web-Content/api-endpoints-res.txt',
+    '/usr/share/seclists/Discovery/Web-Content/File-Extensions-Universal-SVNDigger-Project/all.txt'
+]
