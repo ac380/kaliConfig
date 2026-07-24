@@ -20,6 +20,9 @@
       - "wappalyzer"
       - "dotgit"
       - "foxyproxy-standard"
+    vscode_extensions:
+      - GitHub.github-vscode-theme
+      - PKief.material-icon-theme
 
   tasks:
     - name: Remove conflicting vscode.sources file if exists
@@ -340,6 +343,32 @@
         src: "{{ playbook_dir }}/files/.tmux.conf"
         dest: "{{ user_home }}/.tmux.conf"
         mode: '0644'
+
+    - name: Ensure VS Code user config directory exists
+      ansible.builtin.file:
+        path: "{{ user_home }}/.config/Code/User"
+        state: directory
+        mode: '0755'
+
+    - name: Deploy VS Code settings (theme + icon theme)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/vscode/settings.json"
+        dest: "{{ user_home }}/.config/Code/User/settings.json"
+        mode: '0644'
+
+    - name: List installed VS Code extensions
+      ansible.builtin.command: code --list-extensions
+      register: vscode_installed
+      changed_when: false
+
+    - name: Install VS Code extensions
+      ansible.builtin.command: "code --install-extension {{ item }}"
+      loop: "{{ vscode_extensions }}"
+      when: (item | lower) not in (vscode_installed.stdout_lines | map('lower') | list)
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 3
+      delay: 5
 
     - name: Create Autorecon directory
       become: true
