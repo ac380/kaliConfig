@@ -648,6 +648,25 @@
       retries: 5
       delay: 10
 
+    - name: Check for existing bloodhound-cli symlink
+      ansible.builtin.stat:
+        path: "{{ user_home }}/.local/bin/bloodhound-cli"
+      register: bloodhound_cli_link
+
+    # Deliberately halts the run if the link is already present, per request —
+    # an existing bloodhound-cli in ~/.local/bin means a prior/manual setup we
+    # do not want to silently overwrite.
+    - name: Fail if bloodhound-cli symlink already exists
+      ansible.builtin.fail:
+        msg: "bloodhound-cli already exists at {{ user_home }}/.local/bin/bloodhound-cli; stopping setup."
+      when: bloodhound_cli_link.stat.exists
+
+    - name: Symlink bloodhound-cli into ~/.local/bin
+      ansible.builtin.file:
+        src: "{{ user_home }}/Binaries/bloodhound-cli"
+        dest: "{{ user_home }}/.local/bin/bloodhound-cli"
+        state: link
+
     - name: Download LFI Wordlists to their folder
       become: true
       ansible.builtin.get_url:
