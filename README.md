@@ -25,26 +25,54 @@ ansible-playbook /tmp/kaliConfig/config.yaml -K
 
 ## Troubleshooting
 
-Run verbosely — a task with `retries` prints nothing but `FAILED - RETRYING` on
-each attempt, and `-vvv` is the minimum that appends the actual error to it
-(`-vv` is not enough: it shows task paths and results, but not retry results)  
+**Re-running is safe.** The playbook is idempotent — if a run dies partway
+(dropped network, a mirror timing out), just run it again. Tasks that already
+completed are skipped, so the second run picks up where the first left off.
+
+**See the real error.** Many tasks retry on failure, and by default a retrying
+task only prints `FAILED - RETRYING` with no reason until its last attempt.
+Add `-vvv` to see the actual error as it happens:
 ```
 ansible-playbook /tmp/kaliConfig/config.yaml -K -vvv
 ```
 
-Follow apt from a second terminal — Ansible buffers a task's output until the
-task ends, so a large package batch looks frozen while it is working  
+**Resume from a specific task** instead of re-running the whole playbook. Copy
+the task name from the failed output:
+```
+ansible-playbook /tmp/kaliConfig/config.yaml -K --start-at-task "<task name>"
+```
+
+**Check syntax without running anything**, e.g. after editing the playbook:
+```
+ansible-playbook /tmp/kaliConfig/config.yaml --syntax-check
+```
+
+**Preview changes** without applying them, to see what a run would do:
+```
+ansible-playbook /tmp/kaliConfig/config.yaml -K --check
+```
+
+**A task looks frozen but isn't.** Ansible buffers a task's output until it
+finishes, so a big apt batch or a large download shows nothing for a while.
+Watch progress from a second terminal:
 ```
 tail -f /var/log/apt/term.log
 ```
 
-Find what holds the apt lock, when a task fails with `Unable to acquire the dpkg
-frontend lock`  
+**apt/dpkg lock errors** (`Could not get lock`, `Unable to acquire the dpkg
+frontend lock`) mean another process is using the package manager — often an
+automatic background update. Wait for it to finish, or find what holds the lock:
 ```
 sudo fuser -v /var/lib/dpkg/lock-frontend
 ```
 
-Resume after fixing something, instead of re-running the whole playbook  
+**"Missing sudo password" or permission errors** — the playbook needs the
+become (sudo) password. Always pass `-K` and enter your password when prompted:
 ```
-ansible-playbook /tmp/kaliConfig/config.yaml -K --start-at-task "Install all required apps"
+ansible-playbook /tmp/kaliConfig/config.yaml -K
 ```
+
+**Newly installed CLIs aren't found** after a run. Tools land in `~/.local/bin`,
+`~/go/bin`, and `~/.cargo/bin`; open a new shell (or `source ~/.zshrc`) so your
+`PATH` picks them up. A full reboot is also needed for the `docker` group
+membership to take effect.
