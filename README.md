@@ -25,10 +25,11 @@ ansible-playbook /tmp/kaliConfig/config.yaml -K
 
 ## Troubleshooting
 
-Run verbosely — a task with `retries` prints its error only on the final attempt,
-so `-vv` is the only way to see why an attempt failed  
+Run verbosely — a task with `retries` prints nothing but `FAILED - RETRYING` on
+each attempt, and `-vvv` is the minimum that appends the actual error to it
+(`-vv` is not enough: it shows task paths and results, but not retry results)  
 ```
-ansible-playbook /tmp/kaliConfig/config.yaml -K -vv
+ansible-playbook /tmp/kaliConfig/config.yaml -K -vvv
 ```
 
 Follow apt from a second terminal — Ansible buffers a task's output until the
