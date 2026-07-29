@@ -81,6 +81,8 @@
           - nbtscan
           - nikto
           - nmap
+          - snmp
+          - snmp-mibs-downloader
           - powershell
           - ffuf
           - onesixtyone
@@ -343,6 +345,14 @@
         src: "{{ playbook_dir }}/files/.tmux.conf"
         dest: "{{ user_home }}/.tmux.conf"
         mode: '0644'
+
+    # Referenced by name (not path) from .tmux.conf's @override_copy_command and
+    # .zshrc's clip(), so it must be executable and on PATH.
+    - name: Add SSH-aware clipboard helper
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/clipcopy"
+        dest: "{{ user_home }}/.local/bin/clipcopy"
+        mode: '0755'
 
     - name: Ensure VS Code user config directory exists
       ansible.builtin.file:
