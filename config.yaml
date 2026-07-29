@@ -634,6 +634,20 @@
       retries: 5
       delay: 10
 
+    # BloodHound CLI (SpecterOps) manages the Dockerized BloodHound CE stack.
+    # unarchive downloads and unpacks in one step (wget + tar -xvzf); it relies
+    # on the Docker install task above and the tar/gzip that ship with Kali.
+    - name: Download and unpack BloodHound CLI to Binaries folder
+      ansible.builtin.unarchive:
+        src: https://github.com/SpecterOps/bloodhound-cli/releases/latest/download/bloodhound-cli-linux-amd64.tar.gz
+        dest: "{{ user_home }}/Binaries"
+        remote_src: true
+        mode: '0755'
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
     - name: Download LFI Wordlists to their folder
       become: true
       ansible.builtin.get_url:
