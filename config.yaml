@@ -23,6 +23,128 @@
     vscode_extensions:
       - GitHub.github-vscode-theme
       - PKief.material-icon-theme
+    # Grouped rather than one 96-package list so apt reports per batch: the run
+    # shows progress instead of sitting silent for minutes, and a failure names
+    # the group that broke. Retries then re-attempt only that group.
+    apt_package_groups:
+      - name: core CLI tools
+        packages:
+          - zsh
+          - xsel
+          - curl
+          - wget
+          - git
+          - grc
+          - unzip
+          - fzf
+          - bat
+          - eza
+          - ripgrep
+          - fd-find
+          - ansifilter
+          - exiftool
+          - pipx
+      - name: desktop, fonts and RDP clients
+        packages:
+          - chromium
+          - fonts-firacode
+          - kali-community-wallpapers
+          - xfce4-panel-profiles
+          - freerdp3-x11
+          - rdesktop
+      - name: recon and scanning
+        packages:
+          - nmap
+          - masscan
+          - naabu
+          - dnsrecon
+          - subfinder
+          - assetfinder
+          - nbtscan
+          - onesixtyone
+          - snmp
+          - snmp-mibs-downloader
+          - oscanner
+          - redis-tools
+          - autorecon
+          - seclists
+      - name: web testing
+        packages:
+          - nikto
+          - whatweb
+          - gobuster
+          - feroxbuster
+          - ffuf
+          - dirsearch
+          - arjun
+          - sqlmap
+          - sslscan
+          - burpsuite
+      - name: Windows and Active Directory
+        packages:
+          - impacket-scripts
+          - enum4linux
+          - smbclient
+          - smbmap
+          - krbrelayx
+          - rubeus
+          - responder
+          - evil-winrm-py
+          - powershell
+      - name: cracking and wireless
+        packages:
+          - john
+          - hashcat
+          - aircrack-ng
+      - name: exploitation and pivoting
+        packages:
+          - metasploit-framework
+          - ligolo-ng
+      # kali-tools-windows-resources metapackage expanded to its members,
+      # minus powercat + shellter (both hard Depends of the metapackage and
+      # currently unfetchable via Kali's Cloudflare mirror -> 403 Forbidden).
+      # Installing the members directly lets the rest of the set through.
+      - name: Windows resources (expanded metapackage)
+        packages:
+          - dbd
+          - dnschef
+          - heartleech
+          - hyperion
+          - mimikatz
+          - ncat-w32
+          - ollydbg
+          - regripper
+          - sbd
+          - secure-socket-funneling-windows-binaries
+          - tftpd32
+          - wce
+          - windows-binaries
+          - windows-privesc-check
+      - name: build toolchains and dev headers
+        packages:
+          - cargo
+          - golang-go
+          - gcc-mingw-w64-x86-64
+          - musl-tools
+          - libclang-dev
+          - python3-xlsxwriter
+          - libsmbclient-dev
+          - freetds-dev
+          - libgcrypt20-dev
+          - libidn-dev
+          - libpcre2-dev
+          - libpq-dev
+          - libapr1-dev
+          - libaprutil1-dev
+          - libsvn-dev
+          - libfbclient2
+          - libmysql++-dev
+          - freerdp3-dev
+          - libssh-dev
+          - libsmb2-dev
+          - libkrb5-dev
+          - libsasl2-modules-gssapi-mit
+          - libnss3
 
   tasks:
     - name: Remove conflicting vscode.sources file if exists
@@ -72,112 +194,50 @@
         name: netexec
         state: absent
 
-    - name: Install all required apps
+    - name: Refresh apt cache before resolving the required package set
       become: true
       ansible.builtin.apt:
         update_cache: true
-        name:
-          - zsh
-          - xsel
-          - curl
-          - grc
-          - dnsrecon
-          - enum4linux
-          - feroxbuster
-          - gobuster
-          - impacket-scripts
-          - nbtscan
-          - nikto
-          - nmap
-          - snmp
-          - snmp-mibs-downloader
-          - powershell
-          - ffuf
-          - onesixtyone
-          - oscanner
-          - redis-tools
-          - smbclient
-          - smbmap
-          - sslscan
-          - whatweb
-          - subfinder
-          - naabu
-          - assetfinder
-          - arjun
-          - python3-xlsxwriter
-          - wget
-          - krbrelayx
-          - cargo
-          - chromium
-          - fonts-firacode
-          - eza
-          - seclists
-          - ripgrep
-          - fd-find
-          - unzip
-          - fzf
-          - bat
-          - ansifilter
-          - john
-          - aircrack-ng
-          - burpsuite
-          - metasploit-framework
-          - rubeus
-          - dirsearch
-          - sqlmap
-          - hashcat
-          - responder
-          - masscan
-          - autorecon
-          - exiftool
-          - ligolo-ng
-          - evil-winrm-py
-          - git
-          - pipx
-          - freerdp3-x11
-          - rdesktop
-          # kali-tools-windows-resources metapackage expanded to its members,
-          # minus powercat + shellter (both hard Depends of the metapackage and
-          # currently unfetchable via Kali's Cloudflare mirror -> 403 Forbidden).
-          # Installing the members directly lets the rest of the set through.
-          - dbd
-          - dnschef
-          - heartleech
-          - hyperion
-          - mimikatz
-          - ncat-w32
-          - ollydbg
-          - regripper
-          - sbd
-          - secure-socket-funneling-windows-binaries
-          - tftpd32
-          - wce
-          - windows-binaries
-          - windows-privesc-check
-          - kali-community-wallpapers
-          - xfce4-panel-profiles
-          - libsmbclient-dev
-          - freetds-dev
-          - libgcrypt20-dev
-          - libidn-dev
-          - libpcre2-dev
-          - libpq-dev
-          - libapr1-dev
-          - libaprutil1-dev
-          - libsvn-dev
-          - libfbclient2
-          - libmysql++-dev
-          - freerdp3-dev
-          - libssh-dev
-          - libsmb2-dev
-          - gcc-mingw-w64-x86-64
-          - libclang-dev
-          - libkrb5-dev
-          - libsasl2-modules-gssapi-mit
-          - libnss3
-          - musl-tools
-          - golang-go
+
+    # Diagnostic pass. A retry loop only prints the module's error on its final
+    # attempt, so a bad package name used to show up as five silent
+    # "FAILED - RETRYING" lines. This names every unresolvable package up front.
+    # --dry-run does not download, so mirror 403s still surface in the install
+    # below -- those are the transient failures the retries actually exist for.
+    - name: Check that every required package resolves (dry run)
+      become: true
+      ansible.builtin.command:
+        argv: "{{ ['apt-get', 'install', '--dry-run', '-q'] + (apt_package_groups | map(attribute='packages') | flatten) }}"
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+      register: apt_preflight
+      changed_when: false
+      failed_when: false
+
+    - name: Show why apt could not resolve the package set
+      ansible.builtin.debug:
+        msg: "{{ apt_preflight.stderr_lines | default([]) }}"
+      when: apt_preflight.rc != 0
+
+    - name: Stop when a required package cannot be resolved at all
+      ansible.builtin.fail:
+        msg: >-
+          apt cannot resolve part of the required package set (see the message
+          above). That is a package name or dependency problem, not a transient
+          network error, so retrying will not fix it -- correct
+          apt_package_groups in this playbook.
+      when:
+        - apt_preflight.rc != 0
+        - apt_preflight.stderr is search('Unable to locate package|has no installation candidate|Unable to correct problems')
+
+    - name: Install all required apps
+      become: true
+      ansible.builtin.apt:
+        name: "{{ item.packages }}"
         state: present
+      loop: "{{ apt_package_groups }}"
+      loop_control:
+        label: "{{ item.name }} ({{ item.packages | length }} packages)"
       register: apt_install_apps
       until: apt_install_apps is succeeded
       retries: 5
