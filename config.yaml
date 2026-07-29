@@ -37,12 +37,20 @@
         update_cache: true
         upgrade: full
 
+    - name: Ensure gnupg is installed (provides gpg for --dearmor)
+      become: true
+      ansible.builtin.apt:
+        name: gnupg
+        state: present
+
     - name: Add VS Code GPG key
       become: true
       ansible.builtin.shell: |
-        wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/packages.microsoft.gpg
+        set -o pipefail
+        wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor --yes -o /usr/share/keyrings/packages.microsoft.gpg
       args:
-        creates: /usr/share/keyrings/packages.microsoft.gpg
+        executable: /bin/bash
+      changed_when: false
 
     - name: Add VS Code repository
       become: true
@@ -445,9 +453,11 @@
     - name: Install Docker GPG key
       become: true
       ansible.builtin.shell: |
-        wget -qO- {{ docker_gpg_key_url }} | gpg --dearmor > /etc/apt/keyrings/docker.gpg
+        set -o pipefail
+        wget -qO- {{ docker_gpg_key_url }} | gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg
       args:
-        creates: /etc/apt/keyrings/docker.gpg
+        executable: /bin/bash
+      changed_when: false
 
     - name: Add Docker repository
       become: true
