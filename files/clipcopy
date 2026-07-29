@@ -1,0 +1,28 @@
+#!/bin/sh
+# Copy stdin to the clipboard, correctly in both places this box gets used:
+#
+#   - Sitting at the Kali desktop -> the local X11 clipboard (xsel).
+#   - Reached over SSH (incl. through an RDP jump host) -> OSC 52, the only
+#     mechanism that crosses an SSH hop. The escape sequence rides the TTY
+#     stream up to the *outer* terminal emulator, which performs the real
+#     clipboard write. X11 tools cannot do this: they target this machine's
+#     X server, which nobody is looking at, and no-op with no $DISPLAY.
+#
+# Both paths are attempted so the same command is right either way. Deployed to
+# ~/.local/bin and referenced by name from tmux's @override_copy_command and the
+# `clip` shell function -- keep those in sync if this is renamed or moved.
+#
+# Caveat: terminals cap OSC 52 payload size (commonly ~8-100 KB); very large
+# selections may be truncated. Transfer a file for those.
+
+data=$(cat)
+
+[ -n "$DISPLAY" ] && command -v xsel >/dev/null 2>&1 && \
+    printf '%s' "$data" | xsel -ib 2>/dev/null
+
+if [ -n "$TMUX" ]; then
+    # Loads the tmux buffer and emits OSC 52 outward in one step (tmux 3.2+).
+    printf '%s' "$data" | tmux load-buffer -w -
+else
+    printf '\033]52;c;%s\a' "$(printf '%s' "$data" | base64 | tr -d '\n')"
+fi

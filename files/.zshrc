@@ -345,12 +345,13 @@ parsenmap() {
 
   print -r -- "$out"
 
-  if command -v xsel >/dev/null 2>&1; then
-    print -r -- "$out" | xsel -ib
-  elif command -v xclip >/dev/null 2>&1; then
-    print -r -- "$out" | xclip -selection clipboard
-  fi
+  print -r -- "$out" | clip
 }
+
+# Copy stdin to the clipboard of whatever machine you're actually sitting at --
+# local X clipboard when at the Kali desktop, OSC 52 when reached over SSH.
+# See ~/.local/bin/clipcopy for why xsel alone cannot work remotely.
+clip() { clipcopy > /dev/tty; }
 
 # URL decode function using Python3
 alias urldecode='python3 -c "import sys, urllib.parse as ul; \
@@ -359,6 +360,42 @@ alias urldecode='python3 -c "import sys, urllib.parse as ul; \
 # URL encode function using Python3
 alias urlencode='python3 -c "import sys, urllib.parse as ul; \
     print (ul.quote_plus(sys.argv[1]))"'
+
+# Shows how to get text off this box and onto the laptop clipboard.
+# Written for the usual path: laptop (MobaXterm) -> RDP -> Windows jump host
+# -> PuTTY -> SSH here. PuTTY has no OSC 52 support, so terminal-level selection
+# is the working route; see ~/.local/bin/clipcopy for the rest of the story.
+alias clipshortcuts='echo "
+Copying from here to the laptop clipboard:
+==========================================
+Shift + drag         : Select + auto-copy to the Windows clipboard. RDP then
+                       carries it to the laptop. Works even with tmux mouse
+                       mode on -- Shift overrides the applications mouse use.
+Shift + Alt + drag   : Same, rectangular block. Use this when the window is
+                       split, so you dont grab the neighbouring panes text.
+Shift + middle-click : Extend an existing selection to the click point.
+
+Why you cannot scroll mid-drag:
+-------------------------------
+Inside tmux the terminal only ever holds the CURRENT screen (tmux repaints via
+the alternate screen, so PuTTYs own scrollback stays empty). A terminal-level
+selection therefore cannot reach past what is visible. To grab more:
+
+  Prefix + z     : Zoom the pane to the full window first
+  Ctrl + wheel   : Shrink the PuTTY font -> many more lines fit on one screen
+  Alt + Enter    : PuTTY fullscreen (if enabled under Window > Behaviour)
+  screen by screen : Scroll tmux, Shift+drag, paste, repeat
+
+Outside tmux the selection survives scrolling: Shift+drag the start, scroll,
+then Shift+middle-click the end to extend over it.
+
+For anything longer than a screen or two, skip the clipboard entirely --
+every pane is already logged to ~/TmuxLogs/<date>/<time>/. Pull that file
+over SFTP instead of fighting the selection.
+
+clip                 : Pipe any command output at the clipboard
+                       (works locally; needs an OSC 52 terminal over SSH)
+"'
 
 # Shows Tmux shortcuts
 alias tmuxshortcuts='echo "
@@ -376,6 +413,11 @@ Prefix: Ctrl + Space
 - Alt + Right    : Move window to the right (Alt + Right Arrow)
 - Alt + Left     : Move window to the left (Alt + Left Arrow)
 - Prefix + [     : Enter Copy Mode
+- Prefix + z     : Zoom/unzoom pane (full window - more lines to select)
+- Prefix + m     : Toggle mouse mode (off = native terminal selection)
+- Shift + drag       : Select in the terminal itself, bypassing tmux capture
+- Shift + Alt + drag : Same, but rectangular (avoids grabbing other panes)
+                       -> run 'clipshortcuts' for the full copy workflow
 - Ctrl + r       : If in copy mode, searches backwards (previous match)
 - Ctrl + s       : If in copy mode, searches forwards (next match)
 - Space + Arrow  : If in copy mode, selects everywhere.
