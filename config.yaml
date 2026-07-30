@@ -127,6 +127,7 @@
           - gcc-mingw-w64-x86-64
           - musl-tools
           - libclang-dev
+          - python3-dev
           - python3-xlsxwriter
           - libsmbclient-dev
           - freetds-dev
