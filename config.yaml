@@ -442,13 +442,21 @@
         dest: "{{ user_home }}/.config/Code/User/settings.json"
         mode: '0644'
 
+    # Under WSL the `code` CLI warns that VS Code should be installed on the
+    # Windows side and blocks on "Do you want to continue anyway? [y/N]". Ansible
+    # gives the task no stdin, so the read returns empty and code exits 1.
+    # DONT_PROMPT_WSL_INSTALL skips that prompt; it is a no-op on bare metal.
     - name: List installed VS Code extensions
       ansible.builtin.command: code --list-extensions
+      environment:
+        DONT_PROMPT_WSL_INSTALL: '1'
       register: vscode_installed
       changed_when: false
 
     - name: Install VS Code extensions
       ansible.builtin.command: "code --install-extension {{ item }}"
+      environment:
+        DONT_PROMPT_WSL_INSTALL: '1'
       loop: "{{ vscode_extensions }}"
       when: (item | lower) not in (vscode_installed.stdout_lines | map('lower') | list)
       register: net_retry
