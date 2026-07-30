@@ -402,9 +402,17 @@
         dest: "{{ user_home }}/.zshrc"
         mode: '0644'
 
+    # qterminal (Kali's default terminal) only creates ~/.config/qterminal.org
+    # on first launch, so create it here or the config copy fails on a fresh box.
+    - name: Ensure qterminal config directory exists
+      ansible.builtin.file:
+        path: "{{ user_home }}/.config/qterminal.org"
+        state: directory
+        mode: '0755'
+
     - name: Add custom Terminal configuration
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/files/qterminal.ini"
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/files/qterminal.ini.j2"
         dest: "{{ user_home }}/.config/qterminal.org/qterminal.ini"
         mode: '0644'
 
