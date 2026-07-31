@@ -91,6 +91,11 @@
           - responder
           - evil-winrm-py
           - powershell
+          # manspider's optional file-content extractors: tesseract-ocr (image
+          # OCR) and libreoffice (headless conversion of legacy .doc/.xls). The
+          # tool runs without them but silently skips those file types.
+          - tesseract-ocr
+          - libreoffice
       - name: cracking and wireless
         packages:
           - john
@@ -687,6 +692,15 @@
       retries: 5
       delay: 10
 
+    - name: Install MANSPIDER via pipx
+      ansible.builtin.command: pipx install git+https://github.com/blacklanternsecurity/MANSPIDER
+      args:
+        creates: "{{ user_home }}/.local/bin/manspider"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
     - name: Install WES-NG via pipx
       ansible.builtin.command: pipx install wesng
       args:
@@ -831,6 +845,7 @@
         - https://github.com/jakobfriedl/precompiled-binaries/raw/main/PrivilegeEscalation/KrbRelay/KrbRelay.exe
         - https://github.com/jakobfriedl/precompiled-binaries/raw/main/LateralMovement/SimpleBackdoorAdmin.dll
         - https://github.com/jakobfriedl/precompiled-binaries/raw/main/LateralMovement/SimpleBackdoorAdmin.exe
+        - https://github.com/SnaffCon/Snaffler/releases/latest/download/Snaffler.exe
       register: net_retry
       until: net_retry is succeeded
       retries: 5
