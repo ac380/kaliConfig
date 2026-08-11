@@ -133,6 +133,9 @@
           - musl-tools
           - libclang-dev
           - python3-dev
+          # lxml build headers so DonPAPI's pipx install can compile lxml
+          - libxml2-dev
+          - libxslt1-dev
           - python3-xlsxwriter
           - libsmbclient-dev
           - freetds-dev
