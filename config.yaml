@@ -156,6 +156,34 @@
           - libnss3
 
   tasks:
+    # Corporate web filters that inspect cleartext HTTP identify flagged
+    # hacktools mid-stream (mimikatz, wce, windows-privesc-check, sbd,
+    # powercat, shellter, ...) and reset or 403 the download -- so a benign
+    # package on the same mirror succeeds while the hacktool beside it fails.
+    # The filter cannot see inside TLS, so pin the Kali mirror to HTTPS before
+    # any apt operation. Use kali.download directly (a CDN endpoint that serves
+    # without redirecting) rather than the http.kali.org redirector, which can
+    # 302 apt back onto a cleartext mirror and re-expose the traffic.
+    - name: Find Kali apt source files
+      become: true
+      ansible.builtin.find:
+        paths: /etc/apt
+        patterns:
+          - '*.list'
+          - '*.sources'
+        recurse: true
+      register: apt_source_files
+
+    - name: Force Kali package mirror to HTTPS
+      become: true
+      ansible.builtin.replace:
+        path: "{{ item.path }}"
+        regexp: 'http://(?:http\.kali\.org|kali\.download)/kali'
+        replace: 'https://kali.download/kali'
+      loop: "{{ apt_source_files.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
     - name: Remove conflicting vscode.sources file if exists
       become: true
       ansible.builtin.file:
