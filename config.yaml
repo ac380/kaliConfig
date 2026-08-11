@@ -714,7 +714,9 @@
       delay: 10
 
     - name: Install DonPAPI via pipx
-      ansible.builtin.command: pipx install donpapi
+      # Install from git: the PyPI release pins an old lxml that fails to
+      # build on Python 3.13, whereas main resolves a wheel and installs clean.
+      ansible.builtin.command: pipx install git+https://github.com/login-securite/DonPAPI.git
       args:
         creates: "{{ user_home }}/.local/bin/donpapi"
       register: net_retry
