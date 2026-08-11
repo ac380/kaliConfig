@@ -105,10 +105,12 @@
         packages:
           - metasploit-framework
           - ligolo-ng
-      # kali-tools-windows-resources metapackage expanded to its members,
-      # minus powercat + shellter (both hard Depends of the metapackage and
-      # currently unfetchable via Kali's Cloudflare mirror -> 403 Forbidden).
-      # Installing the members directly lets the rest of the set through.
+      # kali-tools-windows-resources metapackage expanded to its members.
+      # powercat + shellter previously failed here (403/reset) -- that was not
+      # a mirror fault but the corporate HTTP filter blocking flagged
+      # hacktools, which the HTTPS switch above fixes, so they are restored.
+      # Kept as an explicit member list rather than the bare metapackage so one
+      # unfetchable member can never fail the entire set.
       - name: Windows resources (expanded metapackage)
         packages:
           - dbd
@@ -118,9 +120,11 @@
           - mimikatz
           - ncat-w32
           - ollydbg
+          - powercat
           - regripper
           - sbd
           - secure-socket-funneling-windows-binaries
+          - shellter
           - tftpd32
           - wce
           - windows-binaries
@@ -160,10 +164,15 @@
     # hacktools mid-stream (mimikatz, wce, windows-privesc-check, sbd,
     # powercat, shellter, ...) and reset or 403 the download -- so a benign
     # package on the same mirror succeeds while the hacktool beside it fails.
-    # The filter cannot see inside TLS, so pin the Kali mirror to HTTPS before
-    # any apt operation. Use kali.download directly (a CDN endpoint that serves
-    # without redirecting) rather than the http.kali.org redirector, which can
-    # 302 apt back onto a cleartext mirror and re-expose the traffic.
+    # The filter cannot see inside TLS, so force the Kali mirror to HTTPS
+    # before any apt operation. Keep whatever host is already configured and
+    # only upgrade the scheme: the http.kali.org redirector honours the request
+    # scheme -- an HTTPS request 302s to an HTTPS mirror (verified) -- so
+    # multi-mirror failover is retained without ever touching cleartext.
+    # Deliberately no HTTP fallback: cleartext is exactly what the filter
+    # inspects and resets, so falling back to it would re-break the flagged
+    # packages and re-expose the traffic -- it cannot deliver the very packages
+    # it would exist for.
     - name: Find Kali apt source files
       become: true
       ansible.builtin.find:
@@ -174,12 +183,12 @@
         recurse: true
       register: apt_source_files
 
-    - name: Force Kali package mirror to HTTPS
+    - name: Force Kali package mirror to HTTPS (preserve host, upgrade scheme)
       become: true
       ansible.builtin.replace:
         path: "{{ item.path }}"
-        regexp: 'http://(?:http\.kali\.org|kali\.download)/kali'
-        replace: 'https://kali.download/kali'
+        regexp: 'http://(http\.kali\.org|kali\.download)/kali'
+        replace: 'https://\1/kali'
       loop: "{{ apt_source_files.files }}"
       loop_control:
         label: "{{ item.path }}"
