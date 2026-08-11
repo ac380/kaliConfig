@@ -710,6 +710,15 @@
       retries: 5
       delay: 10
 
+    - name: Install DonPAPI via pipx
+      ansible.builtin.command: pipx install donpapi
+      args:
+        creates: "{{ user_home }}/.local/bin/donpapi"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
     - name: Download tools to Binaries folder
       ansible.builtin.get_url:
         url: "{{ item }}"
