@@ -761,6 +761,15 @@
       retries: 5
       delay: 10
 
+    - name: Install Coercer via pipx
+      ansible.builtin.command: pipx install coercer
+      args:
+        creates: "{{ user_home }}/.local/bin/coercer"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
     - name: Download tools to Binaries folder
       ansible.builtin.get_url:
         url: "{{ item }}"
