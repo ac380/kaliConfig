@@ -1234,13 +1234,6 @@
         dest: "{{ user_home }}/.config/i3/blocks/"
         mode: '0755'
 
-    # i3 helper scripts (e.g. new-workspace, bound to $mod+n).
-    - name: Deploy i3 helper scripts
-      ansible.builtin.copy:
-        src: "{{ playbook_dir }}/files/i3/scripts/"
-        dest: "{{ user_home }}/.config/i3/scripts/"
-        mode: '0755'
-
     - name: Deploy i3 clipboard-fix helper (kali-clean)
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/files/i3/clipboard_fix.sh"

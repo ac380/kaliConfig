@@ -26,8 +26,7 @@ bindsym $mod+Down move down
 bindsym $mod+Up move up
 bindsym $mod+Right move right
 
-# new empty workspace / rename the current workspace
-bindsym $mod+n exec --no-startup-id ~/.config/i3/scripts/new-workspace
+# rename the current workspace
 bindsym $mod+comma exec --no-startup-id i3-input -F 'rename workspace to "%s"' -P 'New name: '
 
 # enter fullscreen mode for the focused container
