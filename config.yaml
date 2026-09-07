@@ -1209,6 +1209,15 @@
         dest: "{{ user_home }}/.config/i3/i3blocks.conf"
         mode: '0644'
 
+    # Self-contained i3blocks helper scripts (cpu/memory/disk/iface/bandwidth).
+    # The Debian i3blocks package no longer ships /usr/share/i3blocks scripts,
+    # so i3blocks.conf points at these instead; deployed executable (0755).
+    - name: Deploy i3blocks helper scripts (kali-clean)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/i3/blocks/"
+        dest: "{{ user_home }}/.config/i3/blocks/"
+        mode: '0755'
+
     - name: Deploy i3 clipboard-fix helper (kali-clean)
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/files/i3/clipboard_fix.sh"

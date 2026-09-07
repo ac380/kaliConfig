@@ -1,0 +1,12 @@
+#!/bin/bash
+# IPv4 of an interface (instance). Defaults to the default-route interface.
+IF="${BLOCK_INSTANCE:-$(ip route show default 2>/dev/null | awk '/default/ {print $5; exit}')}"
+[ -z "$IF" ] && { echo "${LABEL}down"; echo; echo '#FF5555'; exit 0; }
+ADDR=$(ip -4 -o addr show dev "$IF" 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | head -1)
+if [ -n "$ADDR" ]; then
+  echo "${LABEL}${IF} ${ADDR}"
+else
+  # interface missing or has no IP: hide the block entirely if a specific instance was requested
+  [ -n "$BLOCK_INSTANCE" ] && exit 0
+  echo "${LABEL}${IF} down"; echo; echo '#FF5555'
+fi

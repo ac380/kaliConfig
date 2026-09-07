@@ -1,0 +1,10 @@
+#!/bin/bash
+# CPU usage % sampled over 1s from /proc/stat
+read -r _ a b c d e f g h _ < /proc/stat; t1=$((a+b+c+d+e+f+g+h)); i1=$((d+e))
+sleep 1
+read -r _ a b c d e f g h _ < /proc/stat; t2=$((a+b+c+d+e+f+g+h)); i2=$((d+e))
+dt=$((t2-t1)); di=$((i2-i1))
+[ "$dt" -gt 0 ] && usage=$(( (dt-di)*100/dt )) || usage=0
+printf '%s%3d%%\n' "${LABEL}" "$usage"
+[ "$usage" -ge 90 ] && echo && echo '#FF5555'
+exit 0

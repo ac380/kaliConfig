@@ -1,0 +1,5 @@
+#!/bin/bash
+# Used / total RAM from /proc/meminfo
+awk -v label="$LABEL" '
+/^MemTotal:/ {t=$2} /^MemAvailable:/ {a=$2}
+END { u=(t-a)/1048576; printf "%s%.1fG/%.1fG\n", label, u, t/1048576 }' /proc/meminfo

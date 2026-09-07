@@ -1,0 +1,9 @@
+#!/bin/bash
+# Down/up rate for an interface (instance), sampled over 1s from /proc/net/dev
+IF="${BLOCK_INSTANCE:-$(ip route show default 2>/dev/null | awk '/default/ {print $5; exit}')}"
+[ -z "$IF" ] && exit 0
+get() { awk -v i="$IF:" '$1==i {print $2, $10}' /proc/net/dev; }
+read -r r1 t1 <<< "$(get)"; sleep 1; read -r r2 t2 <<< "$(get)"
+[ -z "$r1" ] && exit 0
+fmt() { local b=$1; if [ "$b" -ge 1048576 ]; then printf '%.1fM' "$(echo "$b/1048576" | bc -l)"; else printf '%dK' $((b/1024)); fi; }
+echo "${LABEL} $(fmt $((r2-r1)))/s  $(fmt $((t2-t1)))/s"

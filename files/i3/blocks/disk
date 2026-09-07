@@ -1,0 +1,4 @@
+#!/bin/bash
+# Free space on a mount (instance), defaults to /
+DIR="${BLOCK_INSTANCE:-/}"
+df -h -P "$DIR" | awk -v label="$LABEL" 'NR==2 {printf "%s%s free\n", label, $4}'
