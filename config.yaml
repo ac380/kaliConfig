@@ -1180,6 +1180,17 @@
         creates: "{{ user_home }}/.local/bin/wal"
       failed_when: false
 
+    # autotiling: alternates i3 split direction by window dimensions; the i3
+    # config runs it via `exec_always autotiling`.
+    - name: Install autotiling via pipx
+      ansible.builtin.command: pipx install autotiling
+      args:
+        creates: "{{ user_home }}/.local/bin/autotiling"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
     # oh-my-zsh, as kali-clean installs it. --keep-zshrc protects this repo's
     # own custom ~/.zshrc (the upstream installer would otherwise overwrite it);
     # --unattended stops it changing the login shell or launching zsh.
@@ -1221,6 +1232,13 @@
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/files/i3/blocks/"
         dest: "{{ user_home }}/.config/i3/blocks/"
+        mode: '0755'
+
+    # i3 helper scripts (e.g. new-workspace, bound to $mod+n).
+    - name: Deploy i3 helper scripts
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/i3/scripts/"
+        dest: "{{ user_home }}/.config/i3/scripts/"
         mode: '0755'
 
     - name: Deploy i3 clipboard-fix helper (kali-clean)

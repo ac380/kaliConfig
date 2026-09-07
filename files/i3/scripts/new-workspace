@@ -1,0 +1,11 @@
+#!/bin/bash
+# Switch to the lowest-numbered workspace (1..10) that does not yet exist,
+# i.e. a fresh empty one. If all ten already exist, jump to 10.
+existing=$(i3-msg -t get_workspaces | grep -o '"num":[0-9]\+' | grep -o '[0-9]\+')
+for n in $(seq 1 10); do
+  if ! printf '%s\n' $existing | grep -qx "$n"; then
+    i3-msg "workspace number $n" >/dev/null
+    exit 0
+  fi
+done
+i3-msg "workspace number 10" >/dev/null
