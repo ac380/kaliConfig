@@ -1044,6 +1044,11 @@
           - cargo
           - papirus-icon-theme
           - imagemagick
+          # Tools referenced by the i3 config's autostart/lock bindings.
+          - dunst
+          - i3lock
+          - xss-lock
+          - network-manager-gnome
         state: present
       register: net_retry
       until: net_retry is succeeded
@@ -1230,10 +1235,17 @@
         dest: "{{ user_home }}/.config/compton/compton.conf"
         mode: '0644'
 
+    # rofi >= 1.6 reads config.rasi and ignores the old Xresources-style
+    # ~/.config/rofi/config, so deploy the .rasi and remove the dead file.
+    - name: Remove dead Xresources-style rofi config
+      ansible.builtin.file:
+        path: "{{ user_home }}/.config/rofi/config"
+        state: absent
+
     - name: Deploy rofi config (kali-clean)
       ansible.builtin.copy:
-        src: "{{ playbook_dir }}/files/rofi/config"
-        dest: "{{ user_home }}/.config/rofi/config"
+        src: "{{ playbook_dir }}/files/rofi/config.rasi"
+        dest: "{{ user_home }}/.config/rofi/config.rasi"
         mode: '0644'
 
     - name: Deploy alacritty config (kali-clean)
@@ -1241,6 +1253,39 @@
         src: "{{ playbook_dir }}/files/alacritty/alacritty.yml"
         dest: "{{ user_home }}/.config/alacritty/alacritty.yml"
         mode: '0644'
+
+    - name: Ensure dunst config directory exists (kali-clean)
+      ansible.builtin.file:
+        path: "{{ user_home }}/.config/dunst"
+        state: directory
+        mode: '0755'
+
+    - name: Deploy dunst config (kali-clean)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/dunst/dunstrc"
+        dest: "{{ user_home }}/.config/dunst/dunstrc"
+        mode: '0644'
+
+    # Solid dark-blue wallpaper, generated with imagemagick (installed above)
+    # rather than committing a binary. i3 runs ~/.fehbg on start to set it.
+    - name: Ensure wallpapers directory exists (kali-clean)
+      ansible.builtin.file:
+        path: "{{ user_home }}/Pictures/wallpapers"
+        state: directory
+        mode: '0755'
+
+    - name: Generate solid dark-blue wallpaper (kali-clean)
+      ansible.builtin.command: convert -size 1920x1080 xc:#141a2e {{ user_home }}/Pictures/wallpapers/darkblue.png
+      args:
+        creates: "{{ user_home }}/Pictures/wallpapers/darkblue.png"
+
+    - name: Write ~/.fehbg to set the wallpaper (kali-clean)
+      ansible.builtin.copy:
+        dest: "{{ user_home }}/.fehbg"
+        mode: '0755'
+        content: |
+          #!/bin/sh
+          feh --no-fehbg --bg-fill '{{ user_home }}/Pictures/wallpapers/darkblue.png'
     # === end i3 window manager desktop (kali-clean) ===
 
     - name: Load xfce4 panel profile

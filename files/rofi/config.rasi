@@ -1,0 +1,15 @@
+/* rofi configuration (rofi >= 1.6 reads config.rasi; the old Xresources-style
+ * ~/.config/rofi/config is ignored and has been removed). */
+configuration {
+    font:                 "RobotoMono Nerd Font 12";
+    modi:                 "drun,run,window";
+    show-icons:           true;
+    matching:             "fuzzy";
+    drun-display-format:  "{icon} {name}";
+    display-drun:         "Apps";
+    display-run:          "Run";
+    display-window:       "Windows";
+    sidebar-mode:         false;
+}
+
+@theme "/usr/share/rofi/themes/Arc-Dark.rasi"
