@@ -1,6 +1,13 @@
 # kaliConfig
 Prepares a brand new Kali installation with all the tools and customizations needed for pentesting.
 
+It also ports the [xct/kali-clean](https://github.com/xct/kali-clean) i3 setup
+as-is (i3-gaps built from source, the bullseye Alacritty `.deb`, compton, pywal
+and oh-my-zsh, plus the original i3/compton/rofi/alacritty config files),
+installed as an alternate session alongside XFCE. The only omission is the
+wallpaper. After a run, pick `i3` from the login screen, then run `lxappearance`
+and select the Arc-Dark theme.
+
 ## Shortcuts
 Install Ansible  
 ```

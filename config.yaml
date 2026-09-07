@@ -1011,6 +1011,229 @@
         executable: /bin/bash
         creates: "{{ user_home }}/.local/bin/username-anarchy"
 
+    # ===================================================================
+    # i3 window manager desktop -- faithful port of xct/kali-clean's
+    # install.sh (https://github.com/xct/kali-clean). Reproduced as-is,
+    # including now-outdated pieces: the i3-gaps source build, the bullseye
+    # Alacritty .deb, compton, pip3 pywal and oh-my-zsh. Only the wallpaper
+    # (.wallpaper/23.jpg and .fehbg) is omitted, by request. Steps that can
+    # fail on current Kali are marked non-fatal (failed_when: false) so the
+    # rest of the playbook still completes; the packaged apt i3 is installed
+    # too, so a failed source build still leaves a working i3.
+    # ===================================================================
+    - name: Install i3 desktop packages (kali-clean)
+      become: true
+      ansible.builtin.apt:
+        name:
+          - wget
+          - curl
+          - git
+          - thunar
+          - arandr
+          - flameshot
+          - arc-theme
+          - feh
+          - i3blocks
+          - i3status
+          - i3
+          - i3-wm
+          - lxappearance
+          - python3-pip
+          - rofi
+          - unclutter
+          - cargo
+          - papirus-icon-theme
+          - imagemagick
+        state: present
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install i3-gaps build dependencies (kali-clean)
+      become: true
+      ansible.builtin.apt:
+        name:
+          - libxcb-shape0-dev
+          - libxcb-keysyms1-dev
+          - libpango1.0-dev
+          - libxcb-util0-dev
+          - xcb
+          - libxcb1-dev
+          - libxcb-icccm4-dev
+          - libyajl-dev
+          - libev-dev
+          - libxcb-xkb-dev
+          - libxcb-cursor-dev
+          - libxkbcommon-dev
+          - libxcb-xinerama0-dev
+          - libxkbcommon-x11-dev
+          - libstartup-notification0-dev
+          - libxcb-randr0-dev
+          - libxcb-xrm0
+          - libxcb-xrm-dev
+          - autoconf
+          - meson
+          - libxcb-render-util0-dev
+          - libxcb-xfixes0-dev
+        state: present
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    # compton was superseded by picom and may no longer resolve on current
+    # Kali; attempt it faithfully but never halt the run if it is missing.
+    - name: Install compton compositor (kali-clean, may be unavailable)
+      become: true
+      ansible.builtin.apt:
+        name: compton
+        state: present
+      failed_when: false
+
+    - name: Ensure user fonts directory exists (kali-clean)
+      ansible.builtin.file:
+        path: "{{ user_home }}/.local/share/fonts"
+        state: directory
+        mode: '0755'
+
+    - name: Download and install Iosevka + RobotoMono Nerd Fonts (kali-clean)
+      ansible.builtin.unarchive:
+        src: "{{ item }}"
+        dest: "{{ user_home }}/.local/share/fonts"
+        remote_src: true
+      loop:
+        - https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/Iosevka.zip
+        - https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/RobotoMono.zip
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Rebuild font cache (kali-clean)
+      ansible.builtin.command: fc-cache -fv
+      changed_when: false
+
+    # Alacritty 0.10.0-rc4 bullseye .deb, exactly as kali-clean installs it.
+    - name: Download Alacritty .deb (kali-clean)
+      ansible.builtin.get_url:
+        url: https://github.com/barnumbirr/alacritty-debian/releases/download/v0.10.0-rc4-1/alacritty_0.10.0-rc4-1_amd64_bullseye.deb
+        dest: /tmp/alacritty_kali-clean.deb
+        mode: '0644'
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
+    - name: Install Alacritty .deb (kali-clean)
+      become: true
+      ansible.builtin.apt:
+        deb: /tmp/alacritty_kali-clean.deb
+      failed_when: false
+
+    - name: Fix any broken dependencies after the Alacritty .deb (apt -f)
+      become: true
+      ansible.builtin.apt:
+        state: fixed
+
+    # Build i3-gaps from source (Airblader/i3), exactly as kali-clean does.
+    # Modern upstream i3 already merged gaps, so this may be redundant or fail;
+    # kept for faithfulness and made non-fatal.
+    - name: Clone i3-gaps source (kali-clean)
+      ansible.builtin.git:
+        repo: https://github.com/Airblader/i3.git
+        dest: "{{ user_home }}/Binaries/i3-gaps"
+        update: false
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+      failed_when: false
+
+    - name: Build i3-gaps (kali-clean)
+      ansible.builtin.shell: |
+        set -e
+        cd "{{ user_home }}/Binaries/i3-gaps"
+        mkdir -p build && cd build && meson .. && ninja
+      args:
+        executable: /bin/bash
+        creates: "{{ user_home }}/Binaries/i3-gaps/build/i3"
+      failed_when: false
+
+    - name: Install i3-gaps (kali-clean)
+      become: true
+      ansible.builtin.command: ninja -C "{{ user_home }}/Binaries/i3-gaps/build" install
+      args:
+        creates: /usr/local/bin/i3
+      failed_when: false
+
+    # pip3 install pywal -- plain pip fails on Kali's externally-managed Python,
+    # so pass --break-system-packages to keep the faithful behaviour working.
+    - name: Install pywal via pip3 (kali-clean)
+      ansible.builtin.command: pip3 install --break-system-packages pywal
+      args:
+        creates: "{{ user_home }}/.local/bin/wal"
+      failed_when: false
+
+    # oh-my-zsh, as kali-clean installs it. --keep-zshrc protects this repo's
+    # own custom ~/.zshrc (the upstream installer would otherwise overwrite it);
+    # --unattended stops it changing the login shell or launching zsh.
+    - name: Install oh-my-zsh (kali-clean)
+      ansible.builtin.shell: |
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc
+      args:
+        executable: /bin/bash
+        creates: "{{ user_home }}/.oh-my-zsh"
+      failed_when: false
+
+    - name: Ensure i3/compton/rofi/alacritty config directories exist (kali-clean)
+      ansible.builtin.file:
+        path: "{{ user_home }}/.config/{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - i3
+        - compton
+        - rofi
+        - alacritty
+
+    - name: Deploy i3 config (kali-clean)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/i3/config"
+        dest: "{{ user_home }}/.config/i3/config"
+        mode: '0644'
+
+    - name: Deploy i3blocks config (kali-clean)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/i3/i3blocks.conf"
+        dest: "{{ user_home }}/.config/i3/i3blocks.conf"
+        mode: '0644'
+
+    - name: Deploy i3 clipboard-fix helper (kali-clean)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/i3/clipboard_fix.sh"
+        dest: "{{ user_home }}/.config/i3/clipboard_fix.sh"
+        mode: '0755'
+
+    - name: Deploy compton config (kali-clean)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/compton/compton.conf"
+        dest: "{{ user_home }}/.config/compton/compton.conf"
+        mode: '0644'
+
+    - name: Deploy rofi config (kali-clean)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/rofi/config"
+        dest: "{{ user_home }}/.config/rofi/config"
+        mode: '0644'
+
+    - name: Deploy alacritty config (kali-clean)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/alacritty/alacritty.yml"
+        dest: "{{ user_home }}/.config/alacritty/alacritty.yml"
+        mode: '0644'
+    # === end i3 window manager desktop (kali-clean) ===
+
     - name: Load xfce4 panel profile
       ansible.builtin.shell: |
         xfce4-panel-profiles load {{ playbook_dir }}/files/panel.tar.bz2 &&
