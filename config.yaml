@@ -1044,16 +1044,27 @@
           - cargo
           - papirus-icon-theme
           - imagemagick
-          # Tools referenced by the i3 config's autostart/lock bindings.
-          - dunst
-          - i3lock
-          - xss-lock
-          - network-manager-gnome
         state: present
       register: net_retry
       until: net_retry is succeeded
       retries: 5
       delay: 10
+
+    # Tools referenced by the i3 config's autostart/lock bindings. Installed
+    # one at a time and best-effort: some (e.g. network-manager-gnome) may not
+    # resolve on every Kali, and a single missing package must not fail the
+    # atomic install above or block the others.
+    - name: Install i3 autostart/lock tools (best-effort)
+      become: true
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - dunst
+        - i3lock
+        - xss-lock
+        - network-manager-gnome
+      failed_when: false
 
     - name: Install i3-gaps build dependencies (kali-clean)
       become: true
