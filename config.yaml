@@ -199,19 +199,20 @@
         path: /etc/apt/sources.list.d/vscode.sources
         state: absent
 
-    - name: Ensure system is fully upgraded before installing new packages
-      become: true
-      ansible.builtin.apt:
-        update_cache: true
-        upgrade: full
-
+    # Refresh the Microsoft signing key BEFORE the first apt cache update.
+    # Microsoft periodically rotates this key; if a prior run already added the
+    # VS Code repo (vscode.list) but the keyring is stale, `apt update` fails
+    # signature verification for packages.microsoft.com and aborts the whole
+    # cache refresh (ansible treats that as fatal). gnupg (for --dearmor) is
+    # ensured here first, using the existing cache so it does not depend on the
+    # failing update.
     - name: Ensure gnupg is installed (provides gpg for --dearmor)
       become: true
       ansible.builtin.apt:
         name: gnupg
         state: present
 
-    - name: Add VS Code GPG key
+    - name: Add/refresh VS Code (Microsoft) GPG key
       become: true
       ansible.builtin.shell: |
         set -o pipefail
@@ -219,6 +220,12 @@
       args:
         executable: /bin/bash
       changed_when: false
+
+    - name: Ensure system is fully upgraded before installing new packages
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: full
 
     - name: Add VS Code repository
       become: true
