@@ -1,15 +1,15 @@
 # dunst notification daemon — dark theme matching the i3bar.
 
 [global]
-    font = RobotoMono Nerd Font 11
-    # Top-right, offset down so it clears the 30px bar.
+    font = JetBrainsMono Nerd Font 13
+    # Top-right, offset down so it clears the 34px i3bar (34 + 10px gap).
     origin = top-right
-    offset = 10x40
-    width = 320
-    height = 300
+    offset = (10, 44)
+    width = 420
+    height = (0, 300)
     notification_limit = 5
-    padding = 10
-    horizontal_padding = 12
+    padding = 14
+    horizontal_padding = 16
     frame_width = 2
     frame_color = "#82c8ff"
     separator_color = frame

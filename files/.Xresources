@@ -1,0 +1,22 @@
+! ---------------------------------------------------------------------------
+! Font rendering / DPI
+!
+! Base UI font size across this system is 13pt at 96 DPI (~17px em box).
+! DPI is pinned explicitly so Pango consumers (i3, i3bar, rofi, dunst) and
+! Xft consumers (Alacritty, xterm) agree on what "13" means instead of each
+! guessing from the X server reported physical size.
+! ---------------------------------------------------------------------------
+Xft.dpi:        96
+
+! hintslight is the right choice here: JetBrains Mono has good built-in
+! hinting, and full hinting would distort its stem widths at this size.
+Xft.antialias:  true
+Xft.hinting:    true
+Xft.hintstyle:  hintslight
+Xft.autohint:   false
+
+! Subpixel rendering for an RGB-ordered LCD panel.
+! If text shows colour fringing (common if the host scales this display),
+! set Xft.rgba to "none" for grayscale antialiasing instead.
+Xft.rgba:       rgb
+Xft.lcdfilter:  lcddefault

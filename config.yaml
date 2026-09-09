@@ -1120,14 +1120,30 @@
         state: directory
         mode: '0755'
 
-    - name: Download and install Iosevka + RobotoMono Nerd Fonts (kali-clean)
-      ansible.builtin.unarchive:
-        src: "{{ item }}"
-        dest: "{{ user_home }}/.local/share/fonts"
-        remote_src: true
-      loop:
-        - https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/Iosevka.zip
-        - https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/RobotoMono.zip
+    # The i3blocks/rofi/dunst configs embed Nerd Font glyphs, so the plain
+    # fonts-jetbrains-mono apt package (which has none) will not do, and
+    # JetBrains Mono Nerd Font is not packaged for Debian/Kali. Install only the
+    # 8 Regular/Bold/Italic/BoldItalic faces the configs use: the "Mono" build
+    # (single-cell glyphs) for the terminal and the fontconfig monospace alias,
+    # and the natural-width build for the Pango consumers (i3, rofi, dunst). The
+    # full release is ~134 MB and the remaining weights go unused. The font
+    # cache is rebuilt by the next task.
+    - name: Download and install JetBrains Mono Nerd Font (kali-clean)
+      ansible.builtin.shell: |
+        set -e
+        mkdir -p ~/.local/share/fonts/JetBrainsMonoNerdFont
+        curl -sL -o /tmp/JetBrainsMono.zip \
+          https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+        unzip -o -j /tmp/JetBrainsMono.zip \
+          'JetBrainsMonoNerdFont-Regular.ttf'     'JetBrainsMonoNerdFont-Bold.ttf' \
+          'JetBrainsMonoNerdFont-Italic.ttf'      'JetBrainsMonoNerdFont-BoldItalic.ttf' \
+          'JetBrainsMonoNerdFontMono-Regular.ttf' 'JetBrainsMonoNerdFontMono-Bold.ttf' \
+          'JetBrainsMonoNerdFontMono-Italic.ttf'  'JetBrainsMonoNerdFontMono-BoldItalic.ttf' \
+          -d ~/.local/share/fonts/JetBrainsMonoNerdFont/
+        rm -f /tmp/JetBrainsMono.zip
+      args:
+        executable: /bin/bash
+        creates: "{{ user_home }}/.local/share/fonts/JetBrainsMonoNerdFont/JetBrainsMonoNerdFontMono-Regular.ttf"
       register: net_retry
       until: net_retry is succeeded
       retries: 5
@@ -1293,6 +1309,30 @@
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/files/dunst/dunstrc"
         dest: "{{ user_home }}/.config/dunst/dunstrc"
+        mode: '0644'
+
+    # Loaded by the i3 config via `xrdb -merge ~/.Xresources` before any other
+    # client starts; pins DPI to 96 and sets hintslight/subpixel rendering so
+    # Xft consumers (Alacritty, xterm) agree with the Pango 13pt UI font.
+    - name: Deploy X resources (kali-clean)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/.Xresources"
+        dest: "{{ user_home }}/.Xresources"
+        mode: '0644'
+
+    # Makes JetBrains Mono the system monospace: generic `monospace` (GTK/Qt
+    # apps and anything requesting it) resolves to the Nerd Font Mono build,
+    # with a Noto Color Emoji fallback.
+    - name: Ensure fontconfig config directory exists (kali-clean)
+      ansible.builtin.file:
+        path: "{{ user_home }}/.config/fontconfig"
+        state: directory
+        mode: '0755'
+
+    - name: Deploy fontconfig config (kali-clean)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/fontconfig/fonts.conf"
+        dest: "{{ user_home }}/.config/fontconfig/fonts.conf"
         mode: '0644'
 
     # Solid dark-blue wallpaper, generated with imagemagick (installed above)

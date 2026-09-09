@@ -1,7 +1,7 @@
 /* rofi configuration (rofi >= 1.6 reads config.rasi; the old Xresources-style
  * ~/.config/rofi/config is ignored and has been removed). */
 configuration {
-    font:                 "RobotoMono Nerd Font 12";
+    font:                 "JetBrainsMono Nerd Font 13";
     modi:                 "drun,run,window";
     show-icons:           true;
     matching:             "fuzzy";
