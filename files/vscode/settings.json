@@ -1,4 +1,10 @@
 {
+  // Single-user offensive-security box: opening a folder should not prompt for
+  // Workspace Trust or start in Restricted Mode, which otherwise leaves
+  // extensions (and the color theme below) inactive until the folder is
+  // manually trusted. Disabling the feature lets extensions activate and the
+  // theme apply on first launch, with no trust prompt.
+  "security.workspace.trust.enabled": false,
   "workbench.colorTheme": "GitHub Dark Default",
   "workbench.iconTheme": "material-icon-theme"
 }
