@@ -777,6 +777,15 @@
       retries: 5
       delay: 10
 
+    - name: Install pyWhisker via pipx
+      ansible.builtin.command: pipx install git+https://github.com/ShutdownRepo/pywhisker
+      args:
+        creates: "{{ user_home }}/.local/bin/pywhisker"
+      register: net_retry
+      until: net_retry is succeeded
+      retries: 5
+      delay: 10
+
     - name: Download tools to Binaries folder
       ansible.builtin.get_url:
         url: "{{ item }}"
