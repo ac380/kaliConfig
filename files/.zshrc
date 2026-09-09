@@ -571,6 +571,16 @@ export FZF_DEFAULT_OPTS="
   --bind 'ctrl-/:toggle-preview,shift-up:preview-up,shift-down:preview-down'
 "
 
+# Ctrl-R history widget: --wrap makes long commands wrap across rows instead of
+# being cut off at the terminal edge (needs fzf >= 0.51). The echo preview
+# overrides FZF_DEFAULT_OPTS' batcat preview (which is meant for files, not
+# history entries); it stays hidden and toggles with ctrl-/ (bound above).
+export FZF_CTRL_R_OPTS="
+  --wrap
+  --preview 'echo {}'
+  --preview-window 'hidden'
+"
+
 # GRC Coloring
 [[ -s "/etc/grc.zsh" ]] && source /etc/grc.zsh
 
